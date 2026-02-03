@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Camera from './components/Camera';
 import { AppState, HairstyleOption, HairColor, FaceAnalysis, TransformationResult } from './types';
@@ -13,6 +12,7 @@ const App: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState<HairColor>(HAIR_COLORS[0]);
   const [result, setResult] = useState<TransformationResult | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -27,7 +27,10 @@ const App: React.FC = () => {
     }
   }, [appState]);
 
-  const handleStartScan = () => setAppState(AppState.SCANNING);
+  const handleStartScan = () => {
+    setErrorMessage(null);
+    setAppState(AppState.SCANNING);
+  };
 
   const handleCapture = async (base64: string) => {
     setCapturedImage(base64);
@@ -37,13 +40,16 @@ const App: React.FC = () => {
       const res = await analyzeFace(base64);
       setAnalysis(res);
       setAppState(AppState.READY);
-    } catch (err) {
+    } catch (err: any) {
+      console.error("Analysis error:", err);
+      setErrorMessage(err.message || "Failed to analyze face. Check API Key.");
       setAppState(AppState.IDLE);
     }
   };
 
   const handleApplyTransformation = async (style: HairstyleOption, color: HairColor) => {
     if (!capturedImage) return;
+    setErrorMessage(null);
     setSelectedStyle(style);
     setSelectedColor(color);
     setAppState(AppState.TRANSFORMING);
@@ -52,8 +58,9 @@ const App: React.FC = () => {
       const transformedImage = await transformHairstyle(capturedImage, style.prompt, color.prompt);
       setResult({ originalImage: `data:image/jpeg;base64,${capturedImage}`, transformedImage, style, color });
       setAppState(AppState.RESULT);
-    } catch (err) {
-      alert("AI busy. Try again.");
+    } catch (err: any) {
+      console.error("Transformation error:", err);
+      setErrorMessage(err.message || "AI Transformation failed.");
       setAppState(AppState.READY);
     }
   };
@@ -65,6 +72,7 @@ const App: React.FC = () => {
     setSelectedStyle(null);
     setSelectedColor(HAIR_COLORS[0]);
     setResult(null);
+    setErrorMessage(null);
   };
 
   return (
@@ -85,6 +93,13 @@ const App: React.FC = () => {
           <div className="bg-black/60 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 text-[9px] font-black uppercase tracking-widest">{appState}</div>
         )}
       </div>
+
+      {errorMessage && (
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-50 bg-red-500/90 backdrop-blur-md text-white px-6 py-3 rounded-2xl text-xs font-bold shadow-2xl border border-white/20 text-center w-[80%]">
+          <i className="fas fa-exclamation-circle mr-2"></i>
+          {errorMessage}
+        </div>
+      )}
 
       {(appState === AppState.ANALYZING || appState === AppState.TRANSFORMING) && (
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm px-10">
