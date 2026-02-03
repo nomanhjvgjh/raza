@@ -32,19 +32,25 @@
             display: none;
         }
         body {
-            /* Mobile-only interactions */
             -webkit-tap-highlight-color: transparent;
             -webkit-touch-callout: none;
             user-select: none;
             overscroll-behavior-y: contain;
             background: black;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
-        /* Handle modern mobile safe areas (notch/home bar) */
         .safe-pb {
             padding-bottom: env(safe-area-inset-bottom);
         }
         .safe-pt {
             padding-top: env(safe-area-inset-top);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
 <script type="importmap">
